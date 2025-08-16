@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    
+    <div>
+        <h2>Register</h2>
+        <input type="email" id="regEmail" placeholder="Email" value="test@example.com">
+        <input type="password" id="regPassword" placeholder="Password" value="password123">
+        <button onclick="register()">Register</button>
+    </div>
+    
+    <div>
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" value="test@example.com">
+        <input type="password" id="loginPassword" placeholder="Password" value="password123">
+        <button onclick="login()">Login</button>
+    </div>
+    
+    <div>
+        <h2>Get Profile</h2>
+        <button onclick="getProfile()">Get Profile</button>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        let token = localStorage.getItem('accessToken');
+        
+        function showResult(message) {
+            document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(message, null, 2) + '</pre>';
+        }
+        
+        async function register() {
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                showResult({ action: 'Register', data });
+            } catch (error) {
+                showResult({ action: 'Register', error: error.message });
+            }
+        }
+        
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (data.token) {
+                    localStorage.setItem('accessToken', data.token);
+                    token = data.token;
+                }
+                showResult({ action: 'Login', data });
+            } catch (error) {
+                showResult({ action: 'Login', error: error.message });
+            }
+        }
+        
+        async function getProfile() {
+            if (!token) {
+                showResult({ action: 'Get Profile', error: 'No token found. Please login first.' });
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                showResult({ action: 'Get Profile', data });
+            } catch (error) {
+                showResult({ action: 'Get Profile', error: error.message });
+            }
+        }
+    </script>
+</body>
+</html> 
